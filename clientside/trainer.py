@@ -20,6 +20,8 @@ model.load_weights('facenet_keras_weights.h5')
 camw = 640
 camh = 480
 
+uuidembeddings = {}
+
 # For webcam input:
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 face_mesh = mp_face_mesh.FaceMesh(
@@ -43,7 +45,7 @@ async def sockanal(websocket): # Analyzes websocket data
     remote_ip = websocket.remote_address[0] 
 
     async for fmessage in websocket:       
-        receievedhead = fmessage[:36] # gets header from websocket data
+        userid = fmessage[:36] # gets header from websocket data
         message = fmessage[36:]
         if message[:100] == "data:,":
             await websocket.send("owo")
@@ -90,6 +92,7 @@ async def sockanal(websocket): # Analyzes websocket data
                     face = newimage[miny:maxy, minx:maxx]
                     cv2.rectangle(newimage, (minx, miny), (maxx, maxy), (0,0,255), 3) 
                     facevector = get_embedding(model, face)
+                    print(facevector)
 
             await websocket.send("image transfered successfully") # returns success message
 
