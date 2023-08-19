@@ -18,7 +18,7 @@ mp_face_detection = mp.solutions.face_detection
 
 # load the model
 
-model = load_model('facenet_keras.h5')
+model = load_model('facenet_keras.h5') 
 model.load_weights('facenet_keras_weights.h5')
 cap = cv2.VideoCapture(0)
 

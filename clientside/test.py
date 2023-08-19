@@ -11,6 +11,7 @@ from keras.models import load_model, model_from_json
 import mediapipe as mp
 import tensorflow.compat.v1 as tf
 import pickle
+import os
 tf.disable_v2_behavior()
 
 mp_drawing = mp.solutions.drawing_utils
@@ -22,6 +23,24 @@ camw = 640
 camh = 480
 
 uuidembeddings = {}
+res = []
+
+for file in os.listdir("."):
+    if file.endswith('.csfd'):
+        res.append(file)
+for fname in res:
+    f = open(fname, 'rb')
+    uuidembeddings[fname[:-5]] = []
+    while True:
+        try:
+           for d in pickle.load(f):
+                uuidembeddings[fname[:-5]].append(d)
+        except:
+            break
+
+
+
+
 
 # For webcam input:
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
@@ -103,28 +122,7 @@ async def sockanal(websocket): # Analyzes websocket data
                                                 
                         facevector = get_embedding(model, face)
 
-                        thislist = []
-                        try:
-                            thislist = uuidembeddings[userid]
-                        except:
-                            thislist = []
-                            uuidembeddings[userid] = thislist
-                        toadd = True
-                        for i in thislist:
-                            if findCosineSimilarity(i, facevector) <= 0.2:
-                                toadd = False
-                            
-                        if toadd:
-                            print("NEW FACE ADDED")
-                            thislist.append(facevector)
-                        else:
-                            print("EXISTING FACE")
-                        uuidembeddings[userid] = thislist
-                        if len(thislist) == 5:
-                            f = open(f'{userid}.csfd', 'wb')
-                            pickle.dump(thislist, f)
-                            f.close()         
-                        print("finished")                                                                                 
+ 
                 await websocket.send("Awaiting next face image") # returns success message
 
 

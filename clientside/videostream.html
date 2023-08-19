@@ -215,7 +215,7 @@ const doScreenshot = () => {
   canvas.getContext('2d').drawImage(video, 0, 0);
   var b64 = canvas.toDataURL('image/webp');
   
-  str1 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + b64;
+  str1 = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" + b64;
   console.log(str1);
   exampleSocket.send(str1);
 
