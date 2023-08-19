@@ -5,10 +5,18 @@ import cv2
 import numpy as np
 import mediapipe as mp
 import math
+from numpy import expand_dims
+import h5py
+from keras.models import load_model, model_from_json
+import mediapipe as mp
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
-
+model = load_model('facenet_keras.h5')
+model.load_weights('facenet_keras_weights.h5')
 camw = 640
 camh = 480
 
@@ -20,7 +28,13 @@ face_mesh = mp_face_mesh.FaceMesh(
     min_detection_confidence=0.5,
     min_tracking_confidence=0.5) 
 
-    
+def get_embedding(model, face_pixels1):
+    face_pixels = cv2.resize(face_pixels1, (160,160)).astype('float32')
+    mean, std = face_pixels.mean(), face_pixels.std()
+    face_pixels = (face_pixels - mean) / std
+    samples = expand_dims(face_pixels, axis=0)
+    yhat = model.predict(samples)
+    return yhat[0]    
 async def sockanal(websocket): # Analyzes websocket data
     global numframes
     global ipkeys
@@ -75,7 +89,8 @@ async def sockanal(websocket): # Analyzes websocket data
                     maxy = max(sxy)
                     face = newimage[miny:maxy, minx:maxx]
                     cv2.rectangle(newimage, (minx, miny), (maxx, maxy), (0,0,255), 3) 
-                    #print(face)       
+                    facevector = get_embedding(model, face)
+
             await websocket.send("image transfered successfully") # returns success message
 
 
