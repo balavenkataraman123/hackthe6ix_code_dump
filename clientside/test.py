@@ -24,6 +24,7 @@ camh = 480
 
 uuidembeddings = {}
 res = []
+uidtemps = {}
 
 for file in os.listdir("."):
     if file.endswith('.csfd'):
@@ -47,11 +48,11 @@ face_mesh = mp_face_mesh.FaceMesh(
     min_detection_confidence=0.5,
     min_tracking_confidence=0.5) 
 def findCosineSimilarity(source_representation, test_representation):
-    #a = np.matmul(np.transpose(source_representation), test_representation)
-    #b = np.sum(np.multiply(source_representation, source_representation))
-    #c = np.sum(np.multiply(test_representation, test_representation))
-    #return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
-    return np.linalg.norm(source_representation - test_representation)
+    a = np.matmul(np.transpose(source_representation), test_representation)
+    b = np.sum(np.multiply(source_representation, source_representation))
+    c = np.sum(np.multiply(test_representation, test_representation))
+    return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+    
 def get_embedding(model, face_pixels1):
     try:
         face_pixels = cv2.resize(face_pixels1, (160,160)).astype('float32')
@@ -73,9 +74,13 @@ async def sockanal(websocket): # Analyzes websocket data
         if message[:100] == "data:,":
             await websocket.send("owo")
         else:
+            l = []
+            try:
+                l = uidtemps[userid]
+            except:
+                uidtemps[userid] = []
             nparr = np.frombuffer(base64.b64decode(message.split(',')[1]), np.uint8) # decodes base64 image to Numpy matrix
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # converts matrix to opencv format image
-
             image = cv2.resize(img, (640, 480))
             image.flags.writeable = False
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -88,6 +93,8 @@ async def sockanal(websocket): # Analyzes websocket data
             ]
             newimage = image
             face = image
+            cs = 20              
+
             if results.multi_face_landmarks:
                 for face_landmarks in results.multi_face_landmarks:        
                     xcoords = [handmark.x for handmark in face_landmarks.landmark]
@@ -112,12 +119,20 @@ async def sockanal(websocket): # Analyzes websocket data
                     maxy = max(sxy)
                     face = newimage[miny:maxy, minx:maxx]
                     cv2.rectangle(newimage, (minx, miny), (maxx, maxy), (0,0,255), 3) 
-                                            
                     facevector = get_embedding(model, face)
                     if facevector != "no":
                         for i in uuidembeddings[userid]:
-                            print(findCosineSimilarity(facevector, i))
-
+                            cs = min(cs, findCosineSimilarity(facevector, i))
+            print(cs)
+            l.append(cs)
+            if len(l) == 10:
+                overthreshold = 0
+                for k in l:
+                    if k > 0.25:
+                        overthreshold += 1
+                if overthreshold <= 3:
+                    print("MATCHING FACE DETECTED")
+                
             await websocket.send("Awaiting next face image") # returns success message
 
 
@@ -128,5 +143,3 @@ async def main():
 
 asyncio.run(main()) # runs main function asynchronously
 
-if DISPLAY: # closes all video stream windows on program close
-    cv2.destroyAllWindows()

@@ -45,6 +45,7 @@ def get_embedding(model, face_pixels1):
         return yhat[0]    
     except:
         print("whoops")
+        return "noix deez"
 async def sockanal(websocket): # Analyzes websocket data
     global numframes
     global ipkeys
@@ -102,29 +103,29 @@ async def sockanal(websocket): # Analyzes websocket data
                         cv2.rectangle(newimage, (minx, miny), (maxx, maxy), (0,0,255), 3) 
                                                 
                         facevector = get_embedding(model, face)
-
-                        thislist = []
-                        try:
-                            thislist = uuidembeddings[userid]
-                        except:
+                        if not facevector == "noix deez":
                             thislist = []
+                            try:
+                                thislist = uuidembeddings[userid]
+                            except:
+                                thislist = []
+                                uuidembeddings[userid] = thislist
+                            toadd = True
+                            for i in thislist:
+                                if findCosineSimilarity(i, facevector) <= 0.2:
+                                    toadd = False
+                                
+                            if toadd:
+                                print("NEW FACE ADDED")
+                                thislist.append(facevector)
+                            else:
+                                print("EXISTING FACE")
                             uuidembeddings[userid] = thislist
-                        toadd = True
-                        for i in thislist:
-                            if findCosineSimilarity(i, facevector) <= 0.2:
-                                toadd = False
-                            
-                        if toadd:
-                            print("NEW FACE ADDED")
-                            thislist.append(facevector)
-                        else:
-                            print("EXISTING FACE")
-                        uuidembeddings[userid] = thislist
-                        if len(thislist) == 5:
-                            f = open(f'{userid}.csfd', 'wb')
-                            pickle.dump(thislist, f)
-                            f.close()         
-                        print("finished")                                                                                 
+                            if len(thislist) == 5:
+                                f = open(f'{userid}.csfd', 'wb')
+                                pickle.dump(thislist, f)
+                                f.close()         
+                                print("finished")                                                                                 
                 await websocket.send("Awaiting next face image") # returns success message
 
 
