@@ -74,14 +74,21 @@ async def sockanal(websocket): # Analyzes websocket data
         if message[:100] == "data:,":
             await websocket.send("owo")
         else:
+            print(fmessage[:100])
+            print(message[:100])
+            print(userid)
             l = []
             try:
                 l = uidtemps[userid]
             except:
                 uidtemps[userid] = []
-            nparr = np.frombuffer(base64.b64decode(message.split(',')[1]), np.uint8) # decodes base64 image to Numpy matrix
+            nparr = np.frombuffer(base64.b64decode(message.split(',')[1]), np.uint8)# decodes base64 image to Numpy matrix
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # converts matrix to opencv format image
             image = cv2.resize(img, (640, 480))
+            cv2.imshow('MediaPipe Face Mesh2', image)    
+
+            if cv2.waitKey(5) & 0xFF == 27:
+                break            
             image.flags.writeable = False
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             results = face_mesh.process(image)
@@ -129,22 +136,24 @@ async def sockanal(websocket): # Analyzes websocket data
             if len(l) >= 10:
                 overthreshold = 0
                 for k in l[-10:]:
-                    if k > 0.25:
+                    if k > 0.28:
                         overthreshold += 1
                 if overthreshold <= 3:
                     print("FACE MATCH DETECTEDDDD")
                     succ = 1                    
                     await websocket.send("FACE MATCH SUCCESS")
+                else:
+                    l.pop(0)
                     
                     
-            if len(l) >= 100 and not not succ:
-                await websocket.send("FACE MATCH FAILED")
-            elif not succ:
-                await websocket.send("AWAITING IMAGE DATA") # returns success message
+            #if len(l) >= 100 and not not succ:
+            #    await websocket.send("FACE MATCH FAILED")
+            #elif not succ:
+            await websocket.send("AWAITING IMAGE DATA") # returns success message
 
 
 async def main():
-    async with serve(sockanal, "0.0.0.0", 5570): # serves socket with input sent to the analysis function
+    async with serve(sockanal, "0.0.0.0", 8765): # serves socket with input sent to the analysis function
         print("the websocket server has started")
         await asyncio.Future()  # run forever
 
