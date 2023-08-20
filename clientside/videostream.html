@@ -152,7 +152,10 @@ exampleSocket.onopen = function (event) {
 };
 exampleSocket.onmessage = function (event) {
     console.log(event.data);
-    doScreenshot();
+    if(event.data != "FACE MATCH SUCCESS"){
+        doScreenshot();
+    }
+    
 }
 const [play, pause, screenshot] = buttons;
 

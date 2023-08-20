@@ -131,9 +131,12 @@ async def sockanal(websocket): # Analyzes websocket data
                     if k > 0.25:
                         overthreshold += 1
                 if overthreshold <= 3:
-                    print("MATCHING FACE DETECTED")
-                
-            await websocket.send("Awaiting next face image") # returns success message
+                    print("FACE MATCH DETECTEDDDD")
+                    await websocket.send("FACE MATCH SUCCESS")
+                else:
+                    l.pop(0)
+            
+            await websocket.send("AWAITING IMAGE DATA") # returns success message
 
 
 async def main():
