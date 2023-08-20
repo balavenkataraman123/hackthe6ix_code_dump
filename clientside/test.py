@@ -125,18 +125,22 @@ async def sockanal(websocket): # Analyzes websocket data
                             cs = min(cs, findCosineSimilarity(facevector, i))
             print(cs)
             l.append(cs)
-            if len(l) == 10:
+            succ = 0
+            if len(l) >= 10:
                 overthreshold = 0
-                for k in l:
+                for k in l[-10:]:
                     if k > 0.25:
                         overthreshold += 1
                 if overthreshold <= 3:
                     print("FACE MATCH DETECTEDDDD")
+                    succ = 1                    
                     await websocket.send("FACE MATCH SUCCESS")
-                else:
-                    l.pop(0)
-            
-            await websocket.send("AWAITING IMAGE DATA") # returns success message
+                    
+                    
+            if len(l) >= 100 and not not succ:
+                await websocket.send("FACE MATCH FAILED")
+            elif not succ:
+                await websocket.send("AWAITING IMAGE DATA") # returns success message
 
 
 async def main():
